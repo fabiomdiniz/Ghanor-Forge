@@ -11,18 +11,16 @@ interface Props {
 }
 
 export default function CharacterSheet({ character, onUpdate }: Props) {
-  const [isEditingAttrs, setIsEditingAttrs] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [tempAttrs, setTempAttrs] = useState<AttributeSet>(character.attributes);
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [tempNotes, setTempNotes] = useState(character.notes);
 
   // Sync state when character changes
   useEffect(() => {
     setTempAttrs(character.attributes);
     setTempNotes(character.notes);
-    setIsEditingAttrs(false);
-    setIsEditingNotes(false);
-  }, [character.id]);
+    setIsEditing(false);
+  }, [character.id, character.name]); // Use both ID and name to be sure
   
   const defense = 10 + character.attributes.DES;
 
@@ -30,7 +28,7 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
     setTempAttrs(prev => ({ ...prev, [attr]: prev[attr] + delta }));
   };
 
-  const saveAttrs = () => {
+  const saveAll = () => {
     // Recalculate maxHP if CON changed
     const conDiff = tempAttrs.CON - character.attributes.CON;
     const newMaxHP = character.maxHP + conDiff;
@@ -39,15 +37,17 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
     onUpdate({ 
       ...character, 
       attributes: tempAttrs,
+      notes: tempNotes,
       maxHP: newMaxHP,
       currentHP: Math.max(0, newCurrentHP)
     });
-    setIsEditingAttrs(false);
+    setIsEditing(false);
   };
 
-  const cancelAttrs = () => {
+  const cancelEdit = () => {
     setTempAttrs(character.attributes);
-    setIsEditingAttrs(false);
+    setTempNotes(character.notes);
+    setIsEditing(false);
   };
 
   const updateHP = (delta: number) => {
@@ -60,7 +60,7 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
 
   const saveNotes = () => {
     onUpdate({ ...character, notes: tempNotes });
-    setIsEditingNotes(false);
+    setIsEditing(false);
   };
 
   return (
@@ -70,9 +70,9 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
         <div className="flex-1">
           <div className="flex items-center gap-4">
             <h2 className="text-5xl font-bold text-ghanor-red uppercase tracking-tighter">{character.name}</h2>
-            {!isEditingAttrs && !isEditingNotes ? (
+            {!isEditing ? (
               <button 
-                onClick={() => { setIsEditingAttrs(true); setIsEditingNotes(true); }}
+                onClick={() => setIsEditing(true)}
                 className="bg-ghanor-gold text-ghanor-brown py-2 px-4 rounded-full hover:scale-105 transition-transform shadow-lg flex items-center gap-2 font-bold uppercase text-sm"
               >
                 <Edit3 className="w-5 h-5" /> Editar Ficha
@@ -80,13 +80,13 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
             ) : (
               <div className="flex gap-2">
                 <button 
-                  onClick={() => { saveAttrs(); saveNotes(); }}
+                  onClick={saveAll}
                   className="bg-green-700 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 shadow-lg hover:bg-green-800 transition-colors"
                 >
                   <Save className="w-4 h-4" /> Salvar Tudo
                 </button>
                 <button 
-                  onClick={() => { setIsEditingAttrs(false); setIsEditingNotes(false); }}
+                  onClick={cancelEdit}
                   className="bg-red-700 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 shadow-lg hover:bg-red-800 transition-colors"
                 >
                   <X className="w-4 h-4" /> Cancelar
@@ -116,28 +116,13 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
       <div className="space-y-8">
         <div className="flex justify-between items-center mb-4 bg-ghanor-brown/5 p-2 rounded border border-ghanor-gold/20">
           <h3 className="text-xl font-bold uppercase tracking-tight">Atributos</h3>
-          {!isEditingAttrs ? (
+          {!isEditing && (
             <button 
-              onClick={() => setIsEditingAttrs(true)}
+              onClick={() => setIsEditing(true)}
               className="bg-ghanor-red text-white py-1 px-4 rounded font-bold text-sm flex items-center gap-2 hover:bg-red-800 shadow-md border border-ghanor-gold/50"
             >
-              <Edit3 className="w-4 h-4" /> Editar Atributos
+              <Edit3 className="w-4 h-4" /> Editar
             </button>
-          ) : (
-            <div className="flex gap-2">
-              <button 
-                onClick={saveAttrs}
-                className="bg-green-700 text-white px-4 py-1 rounded text-sm font-bold uppercase flex items-center gap-1 hover:bg-green-800 transition-colors shadow-md"
-              >
-                <Save className="w-4 h-4" /> Salvar
-              </button>
-              <button 
-                onClick={cancelAttrs}
-                className="bg-red-700 text-white px-4 py-1 rounded text-sm font-bold uppercase flex items-center gap-1 hover:bg-red-800 transition-colors shadow-md"
-              >
-                <X className="w-4 h-4" /> Cancelar
-              </button>
-            </div>
           )}
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -146,15 +131,15 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
               <div className="bg-parchment-dark border-2 border-ghanor-gold p-3 rounded text-center shadow-md group-hover:shadow-lg transition-shadow">
                 <div className="text-xs font-bold text-ghanor-red uppercase">{attr}</div>
                 <div className="flex items-center justify-center gap-2">
-                  {isEditingAttrs && (
+                  {isEditing && (
                     <button onClick={() => handleAttrChange(attr, -1)} className="text-ghanor-red hover:bg-red-100 rounded-full p-1">
                       <Minus className="w-4 h-4" />
                     </button>
                   )}
                   <div className="text-3xl font-bold">
-                    {(isEditingAttrs ? tempAttrs[attr] : character.attributes[attr]) > 0 ? `+${isEditingAttrs ? tempAttrs[attr] : character.attributes[attr]}` : (isEditingAttrs ? tempAttrs[attr] : character.attributes[attr])}
+                    {(isEditing ? tempAttrs[attr] : character.attributes[attr]) > 0 ? `+${isEditing ? tempAttrs[attr] : character.attributes[attr]}` : (isEditing ? tempAttrs[attr] : character.attributes[attr])}
                   </div>
-                  {isEditingAttrs && (
+                  {isEditing && (
                     <button onClick={() => handleAttrChange(attr, 1)} className="text-ghanor-red hover:bg-red-100 rounded-full p-1">
                       <Plus className="w-4 h-4" />
                     </button>
@@ -282,22 +267,17 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
               <Edit3 className="w-5 h-5 text-ghanor-red" />
               <h3 className="text-xl font-bold uppercase tracking-tight">Notas & Habilidades</h3>
             </div>
-            {!isEditingNotes ? (
+            {!isEditing && (
               <button 
-                onClick={() => { setTempNotes(character.notes); setIsEditingNotes(true); }}
+                onClick={() => setIsEditing(true)}
                 className="text-ghanor-red hover:text-red-700 text-xs font-bold uppercase"
               >
                 Editar
               </button>
-            ) : (
-              <div className="flex gap-2">
-                <button onClick={saveNotes} className="text-green-700 hover:text-green-800"><Save className="w-4 h-4" /></button>
-                <button onClick={() => setIsEditingNotes(false)} className="text-red-700 hover:text-red-800"><X className="w-4 h-4" /></button>
-              </div>
             )}
           </div>
           <div className="text-sm space-y-4">
-            {isEditingNotes ? (
+            {isEditing ? (
               <textarea
                 className="ghanor-input min-h-[200px] text-sm w-full"
                 value={tempNotes}
