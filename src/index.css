@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --color-parchment: #f4e4bc;
+  --color-parchment-dark: #e8d4a2;
+  --color-ghanor-red: #8b0000;
+  --color-ghanor-gold: #d4af37;
+  --color-ghanor-brown: #3d2b1f;
+  
+  --font-serif: "Crimson Text", "Georgia", serif;
+}
+
+@layer base {
+  body {
+    @apply bg-ghanor-brown text-ghanor-brown font-serif;
+    background-image: url('https://www.transparenttextures.com/patterns/dark-leather.png');
+  }
+}
+
+.parchment-card {
+  @apply bg-parchment border-4 border-ghanor-gold shadow-2xl rounded-sm p-6 relative;
+  background-image: url('https://www.transparenttextures.com/patterns/parchment.png');
+}
+
+.ghanor-button {
+  @apply bg-ghanor-red text-parchment px-6 py-2 rounded-sm border-2 border-ghanor-gold hover:bg-red-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wider;
+}
+
+.ghanor-input {
+  @apply bg-parchment-dark border-b-2 border-ghanor-brown focus:border-ghanor-red outline-none px-2 py-1 w-full transition-all;
+}
+
+.ghanor-title {
+  @apply text-ghanor-red font-bold text-3xl uppercase tracking-tighter mb-4;
+  font-variant: small-caps;
+}
