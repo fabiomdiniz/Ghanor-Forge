@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, Sword, BookOpen, Heart, Zap, Scroll, Package, Edit3, Save, X, Plus, Minus } from 'lucide-react';
 import { Character, SkillName, Attribute, AttributeSet } from '../types';
@@ -13,6 +13,16 @@ interface Props {
 export default function CharacterSheet({ character, onUpdate }: Props) {
   const [isEditingAttrs, setIsEditingAttrs] = useState(false);
   const [tempAttrs, setTempAttrs] = useState<AttributeSet>(character.attributes);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [tempNotes, setTempNotes] = useState(character.notes);
+
+  // Sync state when character changes
+  useEffect(() => {
+    setTempAttrs(character.attributes);
+    setTempNotes(character.notes);
+    setIsEditingAttrs(false);
+    setIsEditingNotes(false);
+  }, [character.id]);
   
   const defense = 10 + character.attributes.DES;
 
@@ -48,9 +58,6 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
     onUpdate({ ...character, currentMP: Math.min(character.maxMP, Math.max(0, character.currentMP + delta)) });
   };
 
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
-  const [tempNotes, setTempNotes] = useState(character.notes);
-
   const saveNotes = () => {
     onUpdate({ ...character, notes: tempNotes });
     setIsEditingNotes(false);
@@ -60,8 +67,33 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
     <div className="parchment-card w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Header Info */}
       <div className="lg:col-span-3 border-b-2 border-ghanor-gold pb-4 mb-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-5xl font-bold text-ghanor-red uppercase tracking-tighter">{character.name}</h2>
+        <div className="flex-1">
+          <div className="flex items-center gap-4">
+            <h2 className="text-5xl font-bold text-ghanor-red uppercase tracking-tighter">{character.name}</h2>
+            {!isEditingAttrs && !isEditingNotes ? (
+              <button 
+                onClick={() => { setIsEditingAttrs(true); setIsEditingNotes(true); }}
+                className="bg-ghanor-gold text-ghanor-brown py-2 px-4 rounded-full hover:scale-105 transition-transform shadow-lg flex items-center gap-2 font-bold uppercase text-sm"
+              >
+                <Edit3 className="w-5 h-5" /> Editar Ficha
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => { saveAttrs(); saveNotes(); }}
+                  className="bg-green-700 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 shadow-lg hover:bg-green-800 transition-colors"
+                >
+                  <Save className="w-4 h-4" /> Salvar Tudo
+                </button>
+                <button 
+                  onClick={() => { setIsEditingAttrs(false); setIsEditingNotes(false); }}
+                  className="bg-red-700 text-white px-4 py-2 rounded font-bold uppercase text-sm flex items-center gap-2 shadow-lg hover:bg-red-800 transition-colors"
+                >
+                  <X className="w-4 h-4" /> Cancelar
+                </button>
+              </div>
+            )}
+          </div>
           <p className="text-xl italic opacity-80">{character.concept}</p>
         </div>
         <div className="flex gap-4 text-sm font-bold uppercase">
@@ -82,28 +114,28 @@ export default function CharacterSheet({ character, onUpdate }: Props) {
 
       {/* Attributes & Main Stats */}
       <div className="space-y-8">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold uppercase tracking-tight border-b-2 border-ghanor-gold pr-4">Atributos</h3>
+        <div className="flex justify-between items-center mb-4 bg-ghanor-brown/5 p-2 rounded border border-ghanor-gold/20">
+          <h3 className="text-xl font-bold uppercase tracking-tight">Atributos</h3>
           {!isEditingAttrs ? (
             <button 
               onClick={() => setIsEditingAttrs(true)}
-              className="ghanor-button py-1 px-3 text-xs flex items-center gap-2"
+              className="bg-ghanor-red text-white py-1 px-4 rounded font-bold text-sm flex items-center gap-2 hover:bg-red-800 shadow-md border border-ghanor-gold/50"
             >
-              <Edit3 className="w-3 h-3" /> Editar Atributos
+              <Edit3 className="w-4 h-4" /> Editar Atributos
             </button>
           ) : (
             <div className="flex gap-2">
               <button 
                 onClick={saveAttrs}
-                className="bg-green-700 text-white px-3 py-1 rounded text-xs font-bold uppercase flex items-center gap-1 hover:bg-green-800 transition-colors"
+                className="bg-green-700 text-white px-4 py-1 rounded text-sm font-bold uppercase flex items-center gap-1 hover:bg-green-800 transition-colors shadow-md"
               >
-                <Save className="w-3 h-3" /> Salvar
+                <Save className="w-4 h-4" /> Salvar
               </button>
               <button 
                 onClick={cancelAttrs}
-                className="bg-red-700 text-white px-3 py-1 rounded text-xs font-bold uppercase flex items-center gap-1 hover:bg-red-800 transition-colors"
+                className="bg-red-700 text-white px-4 py-1 rounded text-sm font-bold uppercase flex items-center gap-1 hover:bg-red-800 transition-colors shadow-md"
               >
-                <X className="w-3 h-3" /> Cancelar
+                <X className="w-4 h-4" /> Cancelar
               </button>
             </div>
           )}
